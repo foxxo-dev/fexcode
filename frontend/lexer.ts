@@ -2,6 +2,7 @@
 // [ VarToken, IdentifierToke, EqualsToken, NumberToken ]
 
 export enum TokenType {
+  Null,
   Number,
   Identifier,
   Equals,
@@ -14,7 +15,8 @@ export enum TokenType {
 
 const KEYWORDS: Record<string, TokenType> = {
   var: TokenType.Var,
-  'X': TokenType.BinaryOperator
+  X: TokenType.BinaryOperator,
+  nil: TokenType.Null
 };
 
 export interface Token {
@@ -79,11 +81,12 @@ export function tokenize(source: string): Token[] {
         }
 
         //  Check for reserved keywords
+        //  Check for reserved keywords
         const reserved = KEYWORDS[id];
-        if (reserved == undefined) {
-          tokens.push(token(id, TokenType.Identifier));
-        } else {
+        if (reserved !== undefined) {
           tokens.push(token(id, reserved));
+        } else {
+          tokens.push(token(id, TokenType.Identifier));
         }
       } else if (isSkiable(src[0])) {
         src.shift();
