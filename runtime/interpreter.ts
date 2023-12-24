@@ -1,17 +1,18 @@
-import { ValueTypes, RuntimeValue, NumberValue, NullValue } from './values.ts';
+import { RuntimeValue, NumberValue, NullValue, MK_NULL } from './values.ts';
 import {
   BinaryExpression,
-  NodeType,
   NumericLiteral,
   Stmt,
-  Program
+  Program,
+  Identifier
 } from '../frontend/ast.ts';
+import Enviorment from './enviorment.ts';
 
-function evaluateProgram(program: Program): RuntimeValue {
-  let lastEvaluated: RuntimeValue = { type: 'null', value: 'nil' } as NullValue;
+function evaluateProgram(program: Program, env: Enviorment): RuntimeValue {
+  let lastEvaluated: RuntimeValue = MK_NULL();
 
   for (const stmt of program.body) {
-    lastEvaluated = evaluate(stmt);
+    lastEvaluated = evaluate(stmt, env);
   }
 
   return lastEvaluated;
@@ -22,7 +23,7 @@ function evaluateNumericBinaryExpression(
   rhs: NumberValue,
   operator: string
 ): NumberValue {
-  let result: number;
+  let result: number = 0;
 
   if (operator === '+') {
     result = lhs.value + rhs.value;
@@ -46,9 +47,12 @@ function evaluateNumericBinaryExpression(
   return { value: result, type: 'number' };
 }
 
-function evaluateBinaryExpression(binop: BinaryExpression): RuntimeValue {
-  const lhs = evaluate(binop.left);
-  const rhs = evaluate(binop.right);
+function evaluateBinaryExpression(
+  binop: BinaryExpression,
+  env: Enviorment
+): RuntimeValue {
+  const lhs = evaluate(binop.left, env);
+  const rhs = evaluate(binop.right, env);
 
   if (lhs.type == 'number' && rhs.type == 'number') {
     return evaluateNumericBinaryExpression(
@@ -58,22 +62,26 @@ function evaluateBinaryExpression(binop: BinaryExpression): RuntimeValue {
     );
   }
 
-  return { type: 'null', value: 'nil' } as NullValue;
+  return MK_NULL();
 }
 
-export function evaluate(node: Stmt): RuntimeValue {
+function evaluateIdentifier(id: Identifier, env: Enviorment): RuntimeValue {
+  return env.getVar(id.symbol);
+}
+
+export function evaluate(node: Stmt, env: Enviorment): RuntimeValue {
   switch (node.kind) {
     case 'NumericLiteral':
       return {
         value: (node as NumericLiteral).value,
         type: 'number'
       } as NumberValue;
-    case 'NullLiteral':
-      return { value: 'nil', type: 'null' } as NullValue;
+    case 'Identifier':
+      return evaluateIdentifier(node as Identifier, env);
     case 'BinaryExpression':
-      return evaluateBinaryExpression(node as BinaryExpression);
+      return evaluateBinaryExpression(node as BinaryExpression, env);
     case 'Program':
-      return evaluateProgram(node as Program);
+      return evaluateProgram(node as Program, env);
     default:
       console.error('Type Error: Unknown node type:', node.kind);
       Deno.exit(1);

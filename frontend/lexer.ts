@@ -2,7 +2,6 @@
 // [ VarToken, IdentifierToke, EqualsToken, NumberToken ]
 
 export enum TokenType {
-  Null,
   Number,
   Identifier,
   Equals,
@@ -10,13 +9,13 @@ export enum TokenType {
   CloseParen,
   BinaryOperator,
   Var,
+  StringLiteral,
   EOF // End of File
 }
 
 const KEYWORDS: Record<string, TokenType> = {
   var: TokenType.Var,
-  X: TokenType.BinaryOperator,
-  nil: TokenType.Null
+  X: TokenType.BinaryOperator
 };
 
 export interface Token {
